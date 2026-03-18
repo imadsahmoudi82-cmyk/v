@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إضافة إعلان</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f8f9fa; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #6c5ce7; color: white; border: none; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h3>إضافة إعلان جديد</h3>
+    <input type="text" id="t" placeholder="عنوان الإعلان">
+    <input type="number" id="p" placeholder="السعر">
+    <input type="text" id="i" placeholder="رابط صورة المنتج">
+    <textarea id="d" rows="4" placeholder="الوصف"></textarea>
+    <button onclick="save()">نشر الإعلان</button>
+    <script>
+        function save() {
+            const product = { id: Date.now(), title: document.getElementById('t').value, price: document.getElementById('p').value, img: document.getElementById('i').value || 'https://via.placeholder.com/150', desc: document.getElementById('d').value };
+            let prods = JSON.parse(localStorage.getItem('myProducts')) || [];
+            prods.push(product);
+            localStorage.setItem('myProducts', JSON.stringify(prods));
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+</html>

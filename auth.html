@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تسجيل الدخول | ONE 1</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        :root { 
+            --p: #6c5ce7; --bg: #f8f9fd; --red: #ff4757; --text: #2d3436; 
+            --border: #edf2f7; --card: #ffffff;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
+        body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+        
+        .auth-card { background: var(--card); width: 100%; max-width: 400px; padding: 30px; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; }
+        h2 { color: var(--p); margin-bottom: 25px; font-size: 28px; }
+        
+        .input-group { margin-bottom: 15px; text-align: right; position: relative; }
+        .input-group input { 
+            width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid var(--border); 
+            outline: none; font-size: 15px; background: #fafafa;
+        }
+        .input-group input:focus { border-color: var(--p); }
+        
+        /* حالة الخطأ */
+        .input-group.error input { border-color: var(--red); background: #fffafb; }
+        .error-msg { color: var(--red); font-size: 12px; margin-top: 5px; display: none; font-weight: bold; }
+
+        .btn-auth { 
+            width: 100%; padding: 14px; border: none; border-radius: 14px; 
+            background: var(--p); color: #fff; font-weight: bold; font-size: 16px; 
+            cursor: pointer; margin-top: 10px; box-shadow: 0 5px 15px rgba(108, 92, 231, 0.3);
+        }
+        .btn-auth:active { transform: scale(0.98); }
+
+        .footer-links { margin-top: 20px; font-size: 14px; }
+        .link { color: var(--p); cursor: pointer; text-decoration: none; font-weight: 600; }
+        .forgot-pass { display: block; margin-top: 12px; font-size: 13px; color: #636e72; }
+        
+        #loader { display: none; margin-top: 10px; color: var(--p); }
+    </style>
+</head>
+<body>
+
+    <div class="auth-card" id="authCard">
+        <h2 id="authTitle">تسجيل الدخول</h2>
+        
+        <div id="loginForm">
+            <div class="input-group" id="emailGroup">
+                <input type="email" id="email" placeholder="البريد الإلكتروني">
+            </div>
+            <div class="input-group" id="passGroup">
+                <input type="password" id="password" placeholder="كلمة المرور">
+                <div class="error-msg" id="loginError">البريد الإلكتروني أو كلمة المرور خاطئة</div>
+            </div>
+            
+            <button class="btn-auth" onclick="handleAuth()">دخول</button>
+            
+            <div class="footer-links">
+                <span class="forgot-pass" onclick="resetPassword()">هل نسيت كلمة المرور؟</span>
+                <p>ليس لديك حساب؟ <span class="link" onclick="toggleMode()">إنشاء حساب جديد</span></p>
+            </div>
+        </div>
+
+        <div id="loader"><i class="fas fa-circle-notch fa-spin"></i> جاري التحميل...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const config = { apiKey: "AIzaSyDj1jWQZHnELXe_eFkfGpi3F3_jPGhPm7I", authDomain: "one1-95c0e.firebaseapp.com", projectId: "one1-95c0e", appId: "1:1090900617422:web:f6e9c11bb7a090c39ec89f" };
+        const app = initializeApp(config);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let isLoginMode = true;
+
+        window.toggleMode = () => {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').innerText = isLoginMode ? "تسجيل الدخول" : "إنشاء حساب";
+            document.querySelector('.btn-auth').innerText = isLoginMode ? "دخول" : "تسجيل";
+            document.querySelector('.footer-links p').innerHTML = isLoginMode ? 
+                `ليس لديك حساب؟ <span class="link" onclick="toggleMode()">إنشاء حساب جديد</span>` : 
+                `لديك حساب بالفعل؟ <span class="link" onclick="toggleMode()">تسجيل الدخول</span>`;
+            document.querySelector('.forgot-pass').style.display = isLoginMode ? "block" : "none";
+            clearErrors();
+        };
+
+        function clearErrors() {
+            document.getElementById('emailGroup').classList.remove('error');
+            document.getElementById('passGroup').classList.remove('error');
+            document.getElementById('loginError').style.display = 'none';
+        }
+
+        function showErrors() {
+            document.getElementById('emailGroup').classList.add('error');
+            document.getElementById('passGroup').classList.add('error');
+            document.getElementById('loginError').style.display = 'block';
+        }
+
+        window.handleAuth = async () => {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const loader = document.getElementById('loader');
+            
+            if(!email || !password) return;
+            
+            clearErrors();
+            loader.style.display = "block";
+
+            try {
+                if (isLoginMode) {
+                    // تسجيل الدخول
+                    await signInWithEmailAndPassword(auth, email, password);
+                    window.location.href = "index.html";
+                } else {
+                    // إنشاء حساب
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    // إنشاء وثيقة المستخدم في Firestore فوراً لضمان عدم ظهور خطأ "الحساب غير موجود" لاحقاً
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: email.split('@')[0],
+                        email: email,
+                        photo: "",
+                        followersCount: 0,
+                        followingCount: 0,
+                        postsCount: 0,
+                        isVerified: false
+                    });
+                    window.location.href = "index.html";
+                }
+            } catch (error) {
+                loader.style.display = "none";
+                console.error(error.code);
+                
+                if (isLoginMode) {
+                    // عند وجود أي خطأ في تسجيل الدخول (كلمة سر غلط أو إيميل غلط)
+                    showErrors();
+                } else {
+                    if (error.code === 'auth/email-already-in-use') {
+                        alert("هذا البريد مسجل بالفعل، جرب تسجيل الدخول.");
+                        toggleMode();
+                    } else {
+                        alert("حدث خطأ: " + error.message);
+                    }
+                }
+            }
+        };
+
+        window.resetPassword = async () => {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                alert("يرجى كتابة بريدك الإلكتروني أولاً في الخانة المخصصة.");
+                return;
+            }
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert("تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني. افحص صندوق الرسائل (والـ SPAM).");
+            } catch (error) {
+                alert("تأكد من صحة البريد الإلكتروني المكتوب.");
+            }
+        };
+    </script>
+</body>
+</html>

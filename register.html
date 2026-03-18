@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>إنشاء حساب | ONE 1</title>
+    <style>
+        :root { --p: #6c5ce7; --bg: #050505; --card: #121212; }
+        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .auth-card { background: var(--card); padding: 40px 25px; border-radius: 30px; width: 92%; max-width: 400px; text-align: center; border: 1px solid #222; box-sizing: border-box; }
+        .logo { font-size: 30px; font-weight: 900; color: var(--p); margin-bottom: 25px; }
+        input { width: 100%; padding: 15px; margin-bottom: 15px; background: #1a1a1a; border: 1px solid #333; border-radius: 15px; color: white; outline: none; box-sizing: border-box; font-size: 16px; text-align: right; transition: 0.3s; }
+        input:focus { border-color: var(--p); background: #222; }
+        
+        .btn-main { 
+            width: 100%; padding: 16px; background: var(--p); border: none; border-radius: 15px; 
+            color: white; font-weight: bold; cursor: pointer; font-size: 16px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+        .btn-main:active { 
+            transform: scale(0.92) translateY(2px); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            filter: brightness(0.9);
+        }
+
+        #errorMessage { color: #ff4757; font-size: 13px; margin-bottom: 15px; display: none; background: rgba(255, 71, 87, 0.1); padding: 10px; border-radius: 10px; }
+        .links { margin-top: 25px; font-size: 14px; }
+        .links a { color: #888; text-decoration: none; transition: 0.2s; display: inline-block; }
+        .links a:active { transform: scale(0.95); opacity: 0.7; }
+        .links a span { color: var(--p); font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="auth-card">
+    <div class="logo">حساب جديد</div>
+    <div id="errorMessage"></div>
+    <input type="text" id="name" placeholder="الاسم الكامل">
+    <input type="email" id="email" placeholder="البريد الإلكتروني">
+    <input type="password" id="pass" placeholder="كلمة المرور">
+    <button class="btn-main" id="regBtn">إنشاء الحساب</button>
+    <div class="links">
+        <a href="auth.html">لديك حساب؟ <span>تسجيل الدخول</span></a>
+    </div>
+</div>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    const firebaseConfig = { apiKey: "AIzaSyDj1jWQZHnELXe_eFkfGpi3F3_jPGhPm7I", authDomain: "one1-95c0e.firebaseapp.com", projectId: "one1-95c0e", appId: "1:1090900617422:web:f6e9c11bb7a090c39ec89f" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    document.getElementById('regBtn').onclick = async () => {
+        const n = document.getElementById('name').value;
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('pass').value;
+        if(!n || !e || !p) return;
+        try {
+            const res = await createUserWithEmailAndPassword(auth, e, p);
+            await updateProfile(res.user, { displayName: n });
+            window.location.replace("index.html");
+        } catch (x) {
+            document.getElementById('errorMessage').textContent = "فشل إنشاء الحساب";
+            document.getElementById('errorMessage').style.display = "block";
+        }
+    };
+</script>
+</body>
+</html>
